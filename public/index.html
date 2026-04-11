@@ -406,7 +406,12 @@
   // ---------- Copy link ----------
 
   async function copyLink(hash, filename) {
-    const url = location.origin + '/f/' + hash + '/' + encodeURIComponent(filename);
+    const file = allFiles.find(f => f.hash === hash);
+    if (!file || !file.isPublic || !file.shareId) {
+      toast('File is not public', 'err');
+      return;
+    }
+    const url = location.origin + '/f/' + file.shareId + '/' + encodeURIComponent(filename);
     try {
       await navigator.clipboard.writeText(url);
       const btn = document.getElementById('copy-' + hash);

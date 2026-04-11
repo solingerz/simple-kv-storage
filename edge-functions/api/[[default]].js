@@ -7,8 +7,12 @@
  * PATCH  /api/files/:hash        → toggle public/private visibility
  *
  * KV key schema (EdgeOne KV only allows [A-Za-z0-9_] in keys):
- *   meta_{hash}  → JSON: { hash, filename, mimeType, size, uploadedAt, isPublic }
- *   file_{hash}  → ArrayBuffer (raw file bytes)
+ *   meta_{hash}       → JSON: { hash, filename, mimeType, size, uploadedAt, isPublic, shareId? }
+ *   file_{hash}       → ArrayBuffer (raw file bytes)
+ *   share_{shareId}   → hash  (reverse lookup for the public share URL)
+ *
+ * The share URL uses shareId, not the internal hash. Each public→private→public
+ * cycle rotates shareId so any previously shared URL is permanently invalidated.
  *
  * Globals / environment:
  *   KV             — EdgeOne KV namespace (global binding)
@@ -160,6 +164,9 @@ async function handleDelete(hash, kv) {
     return json({ error: 'File not found' }, 404);
   }
 
+  if (meta.shareId) {
+    await kv.delete(`share_${meta.shareId}`);
+  }
   await kv.delete(`file_${hash}`);
   await kv.delete(`meta_${hash}`);
 
@@ -172,9 +179,24 @@ async function handleToggleVisibility(hash, kv) {
     return json({ error: 'File not found' }, 404);
   }
 
-  meta.isPublic = !meta.isPublic;
-  await kv.put(`meta_${hash}`, JSON.stringify(meta));
+  if (meta.isPublic) {
+    // public → private: revoke the share token so any previously copied
+    // URL is permanently invalidated.
+    if (meta.shareId) {
+      await kv.delete(`share_${meta.shareId}`);
+    }
+    meta.isPublic = false;
+    delete meta.shareId;
+  } else {
+    // private → public: mint a fresh share token. Generating a new id
+    // (rather than reusing the old one) is what breaks old URLs.
+    const shareId = generateHash();
+    await kv.put(`share_${shareId}`, hash);
+    meta.isPublic = true;
+    meta.shareId = shareId;
+  }
 
+  await kv.put(`meta_${hash}`, JSON.stringify(meta));
   return json({ success: true, file: meta });
 }
 

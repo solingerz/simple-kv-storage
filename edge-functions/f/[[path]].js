@@ -1,17 +1,19 @@
 /**
- * File serving endpoint: /f/{hash}/{filename}
- * - Public files: served directly, no auth required
- * - Private files: 403 Forbidden
+ * File serving endpoint: /f/{shareId}/{filename}
+ *
+ * shareId is a rotating token that is minted when a file is made public and
+ * destroyed when it is made private. The internal storage hash never appears
+ * in shared URLs, so toggling public → private → public permanently
+ * invalidates any previously shared URL.
  *
  * Cache strategy per MIME type:
  *   immutable  (images, video, audio, fonts, JS, CSS) → max-age=31536000, immutable
  *   revalidate (HTML, XML, JSON, text)                → max-age=0, must-revalidate
  *   default    (binary, archives, etc.)               → max-age=86400
  *
- * ETag = "{hash}" (the hash is already a stable content fingerprint).
- * Supports If-None-Match → 304.
- * Supports If-Modified-Since / Last-Modified via uploadedAt → 304.
- * On a 304 hit the file body is never fetched from KV, saving a read.
+ * ETag = "{shareId}" — shareId is already a unique, content-stable token for
+ * this share. If the share is revoked and re-minted, the new URL has a new
+ * shareId and therefore a new cache entry.
  */
 
 // ---------- Cache-Control policy ----------
@@ -106,27 +108,31 @@ export async function onRequestGet({ params, request }) {
       return new Response('Not Found', { status: 404 });
     }
 
-    // Extract hash — first segment of /f/{hash}/{filename}
+    // Extract shareId — first segment of /f/{shareId}/{filename}
     const slashIdx = pathStr.indexOf('/');
-    const hash = slashIdx === -1 ? pathStr : pathStr.slice(0, slashIdx);
+    const shareId = slashIdx === -1 ? pathStr : pathStr.slice(0, slashIdx);
 
-    if (!hash) {
+    if (!shareId || !/^[A-Za-z0-9_]+$/.test(shareId)) {
       return new Response('Not Found', { status: 404 });
+    }
+
+    // shareId → internal hash. Missing = revoked or never existed → 404.
+    const hash = await KV.get(`share_${shareId}`);
+    if (!hash) {
+      return new Response('File Not Found', { status: 404 });
     }
 
     // Always read metadata first (cheap); skip file body on cache hit
     const metaRaw = await KV.get(`meta_${hash}`);
     const meta = metaRaw ? JSON.parse(metaRaw) : null;
 
-    if (!meta) {
+    // Defense in depth: even if a stale share_ entry exists, refuse to
+    // serve unless the meta still advertises this exact shareId as public.
+    if (!meta || !meta.isPublic || meta.shareId !== shareId) {
       return new Response('File Not Found', { status: 404 });
     }
 
-    if (!meta.isPublic) {
-      return new Response('Forbidden — this file is private', { status: 403 });
-    }
-
-    const etag         = `"${hash}"`;
+    const etag         = `"${shareId}"`;
     const lastModified = meta.uploadedAt
       ? new Date(meta.uploadedAt).toUTCString()
       : null;
