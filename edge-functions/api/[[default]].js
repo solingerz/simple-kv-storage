@@ -10,10 +10,10 @@
  *   meta:{hash}  → JSON: { hash, filename, mimeType, size, uploadedAt, isPublic }
  *   file:{hash}  → ArrayBuffer (raw file bytes)
  *
- * Environment variables:
- *   KV             — bound KV namespace
- *   AUTH_USERNAME  — admin username
- *   AUTH_PASSWORD  — admin password
+ * Globals / environment:
+ *   KV             — EdgeOne KV namespace (global binding)
+ *   AUTH_USERNAME  — admin username (env var)
+ *   AUTH_PASSWORD  — admin password (env var)
  */
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;       // 20 MB
@@ -182,27 +182,22 @@ export async function onRequest({ request, env }) {
     return unauthorizedResponse();
   }
 
-  const kv = env.KV;
-  if (!kv) {
-    return json({ error: 'KV namespace not configured' }, 500);
-  }
-
   // GET /api/files
   if (method === 'GET' && pathname === '/api/files') {
-    return handleList(kv);
+    return handleList(KV);
   }
 
   // POST /api/upload
   if (method === 'POST' && pathname === '/api/upload') {
-    return handleUpload(request, kv);
+    return handleUpload(request, KV);
   }
 
   // DELETE /api/files/:hash  or  PATCH /api/files/:hash
   const fileMatch = pathname.match(/^\/api\/files\/([0-9a-f]{32})$/);
   if (fileMatch) {
     const hash = fileMatch[1];
-    if (method === 'DELETE') return handleDelete(hash, kv);
-    if (method === 'PATCH') return handleToggleVisibility(hash, kv);
+    if (method === 'DELETE') return handleDelete(hash, KV);
+    if (method === 'PATCH') return handleToggleVisibility(hash, KV);
   }
 
   return json({ error: 'Not Found' }, 404);

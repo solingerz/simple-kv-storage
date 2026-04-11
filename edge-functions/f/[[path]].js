@@ -92,12 +92,7 @@ function isCached(request, etag, lastModified) {
 
 // ---------- Handler ----------
 
-export async function onRequestGet({ params, request, env }) {
-  const kv = env.KV;
-  if (!kv) {
-    return new Response('KV namespace not configured', { status: 500 });
-  }
-
+export async function onRequestGet({ params, request }) {
   const pathStr = Array.isArray(params.path)
     ? params.path.join('/')
     : params.path || '';
@@ -115,7 +110,7 @@ export async function onRequestGet({ params, request, env }) {
   }
 
   // Always read metadata first (cheap); skip file body on cache hit
-  const meta = await kv.get(`meta:${hash}`, { type: 'json' });
+  const meta = await KV.get(`meta:${hash}`, { type: 'json' });
 
   if (!meta) {
     return new Response('File Not Found', { status: 404 });
@@ -145,7 +140,7 @@ export async function onRequestGet({ params, request, env }) {
   }
 
   // Fetch the actual file bytes
-  const fileData = await kv.get(`file:${hash}`, { type: 'arrayBuffer' });
+  const fileData = await KV.get(`file:${hash}`, { type: 'arrayBuffer' });
 
   if (!fileData) {
     return new Response('File Not Found', { status: 404 });
