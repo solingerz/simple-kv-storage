@@ -110,7 +110,7 @@ export async function onRequestGet({ params, request }) {
   }
 
   // Always read metadata first (cheap); skip file body on cache hit
-  const meta = await KV.get(`meta:${hash}`, { type: 'json' });
+  const meta = await KV.get(`meta_${hash}`, { type: 'json' });
 
   if (!meta) {
     return new Response('File Not Found', { status: 404 });
@@ -140,7 +140,7 @@ export async function onRequestGet({ params, request }) {
   }
 
   // Fetch the actual file bytes
-  const fileData = await KV.get(`file:${hash}`, { type: 'arrayBuffer' });
+  const fileData = await KV.get(`file_${hash}`, { type: 'arrayBuffer' });
 
   if (!fileData) {
     return new Response('File Not Found', { status: 404 });

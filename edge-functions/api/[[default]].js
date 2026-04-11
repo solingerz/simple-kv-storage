@@ -6,9 +6,9 @@
  * DELETE /api/files/:hash        → delete a file
  * PATCH  /api/files/:hash        → toggle public/private visibility
  *
- * KV key schema:
- *   meta:{hash}  → JSON: { hash, filename, mimeType, size, uploadedAt, isPublic }
- *   file:{hash}  → ArrayBuffer (raw file bytes)
+ * KV key schema (EdgeOne KV only allows [A-Za-z0-9_] in keys):
+ *   meta_{hash}  → JSON: { hash, filename, mimeType, size, uploadedAt, isPublic }
+ *   file_{hash}  → ArrayBuffer (raw file bytes)
  *
  * Globals / environment:
  *   KV             — EdgeOne KV namespace (global binding)
@@ -71,7 +71,7 @@ async function handleList(kv) {
   let result;
 
   do {
-    const opts = { prefix: 'meta:', limit: 256 };
+    const opts = { prefix: 'meta_', limit: 256 };
     if (cursor) opts.cursor = cursor;
     result = await kv.list(opts);
     cursor = result.cursor;
@@ -112,7 +112,7 @@ async function handleUpload(request, kv) {
   let result;
   let usedSize = 0;
   do {
-    const opts = { prefix: 'meta:', limit: 256 };
+    const opts = { prefix: 'meta_', limit: 256 };
     if (cursor) opts.cursor = cursor;
     result = await kv.list(opts);
     cursor = result.cursor;
@@ -141,32 +141,32 @@ async function handleUpload(request, kv) {
     isPublic: false,
   };
 
-  await kv.put(`file:${hash}`, buffer);
-  await kv.put(`meta:${hash}`, JSON.stringify(meta));
+  await kv.put(`file_${hash}`, buffer);
+  await kv.put(`meta_${hash}`, JSON.stringify(meta));
 
   return json({ success: true, file: meta }, 201);
 }
 
 async function handleDelete(hash, kv) {
-  const meta = await kv.get(`meta:${hash}`, { type: 'json' });
+  const meta = await kv.get(`meta_${hash}`, { type: 'json' });
   if (!meta) {
     return json({ error: 'File not found' }, 404);
   }
 
-  await kv.delete(`file:${hash}`);
-  await kv.delete(`meta:${hash}`);
+  await kv.delete(`file_${hash}`);
+  await kv.delete(`meta_${hash}`);
 
   return json({ success: true });
 }
 
 async function handleToggleVisibility(hash, kv) {
-  const meta = await kv.get(`meta:${hash}`, { type: 'json' });
+  const meta = await kv.get(`meta_${hash}`, { type: 'json' });
   if (!meta) {
     return json({ error: 'File not found' }, 404);
   }
 
   meta.isPublic = !meta.isPublic;
-  await kv.put(`meta:${hash}`, JSON.stringify(meta));
+  await kv.put(`meta_${hash}`, JSON.stringify(meta));
 
   return json({ success: true, file: meta });
 }
