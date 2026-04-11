@@ -156,8 +156,18 @@ export async function onRequestGet({ params, request, env }) {
     headers: {
       ...baseHeaders,
       'Content-Type':        meta.mimeType || 'application/octet-stream',
-      'Content-Disposition': `inline; filename="${encodeURIComponent(meta.filename)}"`,
+      'Content-Disposition': contentDisposition(meta.filename),
       'Content-Length':      String(meta.size),
     },
   });
+}
+
+// RFC 6266 / RFC 5987: provide an ASCII fallback and a UTF-8 encoded variant.
+// The fallback strips non-ASCII and any control/quote characters that would
+// break the header or allow CRLF injection from an attacker-controlled name.
+function contentDisposition(filename) {
+  const name = String(filename || 'file');
+  const ascii = name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
+  const encoded = encodeURIComponent(name).replace(/['()]/g, escape);
+  return `inline; filename="${ascii}"; filename*=UTF-8''${encoded}`;
 }

@@ -174,6 +174,10 @@ async function handleToggleVisibility(hash, kv) {
 // ---------- Router ----------
 
 export async function onRequest({ request, env }) {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+  const method = request.method;
+
   if (!checkAuth(request, env)) {
     return unauthorizedResponse();
   }
@@ -181,22 +185,6 @@ export async function onRequest({ request, env }) {
   const kv = env.KV;
   if (!kv) {
     return json({ error: 'KV namespace not configured' }, 500);
-  }
-
-  const url = new URL(request.url);
-  const pathname = url.pathname; // e.g. /api/files, /api/files/abc123
-  const method = request.method;
-
-  // CORS preflight
-  if (method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, DELETE, PATCH, OPTIONS',
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-      },
-    });
   }
 
   // GET /api/files

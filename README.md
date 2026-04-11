@@ -16,13 +16,16 @@
 
 ```
 ├── edge-functions/
-│   ├── index.js              # 管理后台（受 Basic Auth 保护）
 │   ├── f/
 │   │   └── [[path]].js       # 文件下载端点（公开文件无需鉴权）
 │   └── api/
 │       └── [[default]].js    # REST API（所有路由需 Basic Auth）
-└── edgeone.json              # EdgeOne Pages 配置
+├── public/
+│   └── index.html            # 管理后台静态页（API 调用触发 Basic Auth）
+└── edgeone.json              # EdgeOne Pages 配置（outputDirectory: "public"）
 ```
+
+管理后台是一个静态 HTML 页面，本身不受 Basic Auth 保护；页面内向 `/api/*` 发起的请求会收到 `401 WWW-Authenticate: Basic`，浏览器弹出登录框后凭据被自动附加。
 
 ## 缓存策略
 
@@ -63,7 +66,7 @@
 
 | 路径 | 方法 | 鉴权 | 说明 |
 |---|---|---|---|
-| `/` | GET | Basic Auth | 管理后台 |
+| `/` | GET | 无（静态页）| 管理后台 UI，加载后调用受保护的 `/api/*` |
 | `/f/:hash/:filename` | GET | 无（公开文件）| 文件下载 / 预览 |
 | `/api/files` | GET | Basic Auth | 列出所有文件及存储统计 |
 | `/api/upload` | POST | Basic Auth | 上传文件 |

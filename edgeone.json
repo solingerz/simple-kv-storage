@@ -1,3 +1,4 @@
 {
-  "name": "simple-kv-storage"
+  "name": "simple-kv-storage",
+  "outputDirectory": "public"
 }
