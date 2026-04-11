@@ -65,25 +65,43 @@ function generateHash() {
 
 // ---------- Handlers ----------
 
-async function handleList(kv) {
-  const files = [];
-  let cursor;
-  let result;
+async function getMeta(kv, hash) {
+  const raw = await kv.get(`meta_${hash}`);
+  return raw ? JSON.parse(raw) : null;
+}
 
-  do {
+async function listAllMeta(kv) {
+  const files = [];
+  let cursor = '';
+  let complete = false;
+
+  while (!complete) {
     const opts = { prefix: 'meta_', limit: 256 };
     if (cursor) opts.cursor = cursor;
-    result = await kv.list(opts);
-    cursor = result.cursor;
+    const page = await kv.list(opts);
+    const keys = Array.isArray(page?.keys) ? page.keys : [];
 
-    for (const keyObj of result.keys) {
-      const meta = await kv.get(keyObj.key, { type: 'json' });
-      if (meta) files.push(meta);
+    for (const keyObj of keys) {
+      const raw = await kv.get(keyObj.key);
+      if (raw) {
+        try { files.push(JSON.parse(raw)); } catch {}
+      }
     }
-  } while (result && !result.complete);
 
+    if (page?.cursor) {
+      cursor = page.cursor;
+    } else if (keys.length > 0) {
+      cursor = keys[keys.length - 1].key;
+    }
+    complete = Boolean(page?.complete) || keys.length === 0;
+  }
+
+  return files;
+}
+
+async function handleList(kv) {
+  const files = await listAllMeta(kv);
   const totalSize = files.reduce((acc, f) => acc + (f.size || 0), 0);
-
   return json({ files, totalSize, maxTotalSize: MAX_TOTAL_SIZE });
 }
 
@@ -108,19 +126,8 @@ async function handleUpload(request, kv) {
   }
 
   // Check total storage
-  let cursor;
-  let result;
-  let usedSize = 0;
-  do {
-    const opts = { prefix: 'meta_', limit: 256 };
-    if (cursor) opts.cursor = cursor;
-    result = await kv.list(opts);
-    cursor = result.cursor;
-    for (const keyObj of result.keys) {
-      const meta = await kv.get(keyObj.key, { type: 'json' });
-      if (meta) usedSize += meta.size || 0;
-    }
-  } while (result && !result.complete);
+  const existing = await listAllMeta(kv);
+  const usedSize = existing.reduce((acc, f) => acc + (f.size || 0), 0);
 
   if (usedSize + file.size > MAX_TOTAL_SIZE) {
     return json(
@@ -148,7 +155,7 @@ async function handleUpload(request, kv) {
 }
 
 async function handleDelete(hash, kv) {
-  const meta = await kv.get(`meta_${hash}`, { type: 'json' });
+  const meta = await getMeta(kv, hash);
   if (!meta) {
     return json({ error: 'File not found' }, 404);
   }
@@ -160,7 +167,7 @@ async function handleDelete(hash, kv) {
 }
 
 async function handleToggleVisibility(hash, kv) {
-  const meta = await kv.get(`meta_${hash}`, { type: 'json' });
+  const meta = await getMeta(kv, hash);
   if (!meta) {
     return json({ error: 'File not found' }, 404);
   }
@@ -174,31 +181,45 @@ async function handleToggleVisibility(hash, kv) {
 // ---------- Router ----------
 
 export async function onRequest({ request, env }) {
-  const url = new URL(request.url);
-  const pathname = url.pathname;
-  const method = request.method;
+  try {
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+    const method = request.method;
 
-  if (!checkAuth(request, env)) {
-    return unauthorizedResponse();
+    if (!checkAuth(request, env)) {
+      return unauthorizedResponse();
+    }
+
+    if (typeof KV === 'undefined') {
+      return json(
+        { error: 'KV binding not found. Bind a KV namespace with variable name "KV" in EdgeOne Pages settings.' },
+        500
+      );
+    }
+
+    // GET /api/files
+    if (method === 'GET' && pathname === '/api/files') {
+      return await handleList(KV);
+    }
+
+    // POST /api/upload
+    if (method === 'POST' && pathname === '/api/upload') {
+      return await handleUpload(request, KV);
+    }
+
+    // DELETE /api/files/:hash  or  PATCH /api/files/:hash
+    const fileMatch = pathname.match(/^\/api\/files\/([0-9a-f]{32})$/);
+    if (fileMatch) {
+      const hash = fileMatch[1];
+      if (method === 'DELETE') return await handleDelete(hash, KV);
+      if (method === 'PATCH') return await handleToggleVisibility(hash, KV);
+    }
+
+    return json({ error: 'Not Found' }, 404);
+  } catch (err) {
+    return json(
+      { error: err && err.message ? err.message : String(err), stack: err && err.stack },
+      500
+    );
   }
-
-  // GET /api/files
-  if (method === 'GET' && pathname === '/api/files') {
-    return handleList(KV);
-  }
-
-  // POST /api/upload
-  if (method === 'POST' && pathname === '/api/upload') {
-    return handleUpload(request, KV);
-  }
-
-  // DELETE /api/files/:hash  or  PATCH /api/files/:hash
-  const fileMatch = pathname.match(/^\/api\/files\/([0-9a-f]{32})$/);
-  if (fileMatch) {
-    const hash = fileMatch[1];
-    if (method === 'DELETE') return handleDelete(hash, KV);
-    if (method === 'PATCH') return handleToggleVisibility(hash, KV);
-  }
-
-  return json({ error: 'Not Found' }, 404);
 }

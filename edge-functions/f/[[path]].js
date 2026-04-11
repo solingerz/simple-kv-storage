@@ -93,68 +93,80 @@ function isCached(request, etag, lastModified) {
 // ---------- Handler ----------
 
 export async function onRequestGet({ params, request }) {
-  const pathStr = Array.isArray(params.path)
-    ? params.path.join('/')
-    : params.path || '';
+  try {
+    if (typeof KV === 'undefined') {
+      return new Response('KV binding not found', { status: 500 });
+    }
 
-  if (!pathStr) {
-    return new Response('Not Found', { status: 404 });
+    const pathStr = Array.isArray(params.path)
+      ? params.path.join('/')
+      : params.path || '';
+
+    if (!pathStr) {
+      return new Response('Not Found', { status: 404 });
+    }
+
+    // Extract hash — first segment of /f/{hash}/{filename}
+    const slashIdx = pathStr.indexOf('/');
+    const hash = slashIdx === -1 ? pathStr : pathStr.slice(0, slashIdx);
+
+    if (!hash) {
+      return new Response('Not Found', { status: 404 });
+    }
+
+    // Always read metadata first (cheap); skip file body on cache hit
+    const metaRaw = await KV.get(`meta_${hash}`);
+    const meta = metaRaw ? JSON.parse(metaRaw) : null;
+
+    if (!meta) {
+      return new Response('File Not Found', { status: 404 });
+    }
+
+    if (!meta.isPublic) {
+      return new Response('Forbidden — this file is private', { status: 403 });
+    }
+
+    const etag         = `"${hash}"`;
+    const lastModified = meta.uploadedAt
+      ? new Date(meta.uploadedAt).toUTCString()
+      : null;
+    const cc           = cacheControl(meta.mimeType);
+
+    // Build the shared headers used for both 200 and 304
+    const baseHeaders = {
+      'ETag':          etag,
+      'Cache-Control': cc,
+      'Vary':          'Accept-Encoding',
+      ...(lastModified ? { 'Last-Modified': lastModified } : {}),
+    };
+
+    // 304 — client already has this version; no body, no KV file read
+    if (isCached(request, etag, lastModified)) {
+      return new Response(null, { status: 304, headers: baseHeaders });
+    }
+
+    // Fetch the actual file bytes
+    const fileData = await KV.get(`file_${hash}`, { type: 'arrayBuffer' });
+
+    if (!fileData) {
+      return new Response('File Not Found', { status: 404 });
+    }
+
+    return new Response(fileData, {
+      status: 200,
+      headers: {
+        ...baseHeaders,
+        'Content-Type':        meta.mimeType || 'application/octet-stream',
+        'Content-Disposition': contentDisposition(meta.filename),
+        'Content-Length':      String(meta.size),
+      },
+    });
+  } catch (err) {
+    return new Response(
+      'Error: ' + (err && err.message ? err.message : String(err)),
+      { status: 500 }
+    );
   }
-
-  // Extract hash — first segment of /f/{hash}/{filename}
-  const slashIdx = pathStr.indexOf('/');
-  const hash = slashIdx === -1 ? pathStr : pathStr.slice(0, slashIdx);
-
-  if (!hash) {
-    return new Response('Not Found', { status: 404 });
-  }
-
-  // Always read metadata first (cheap); skip file body on cache hit
-  const meta = await KV.get(`meta_${hash}`, { type: 'json' });
-
-  if (!meta) {
-    return new Response('File Not Found', { status: 404 });
-  }
-
-  if (!meta.isPublic) {
-    return new Response('Forbidden — this file is private', { status: 403 });
-  }
-
-  const etag         = `"${hash}"`;
-  const lastModified = meta.uploadedAt
-    ? new Date(meta.uploadedAt).toUTCString()
-    : null;
-  const cc           = cacheControl(meta.mimeType);
-
-  // Build the shared headers used for both 200 and 304
-  const baseHeaders = {
-    'ETag':          etag,
-    'Cache-Control': cc,
-    'Vary':          'Accept-Encoding',
-    ...(lastModified ? { 'Last-Modified': lastModified } : {}),
-  };
-
-  // 304 — client already has this version; no body, no KV file read
-  if (isCached(request, etag, lastModified)) {
-    return new Response(null, { status: 304, headers: baseHeaders });
-  }
-
-  // Fetch the actual file bytes
-  const fileData = await KV.get(`file_${hash}`, { type: 'arrayBuffer' });
-
-  if (!fileData) {
-    return new Response('File Not Found', { status: 404 });
-  }
-
-  return new Response(fileData, {
-    status: 200,
-    headers: {
-      ...baseHeaders,
-      'Content-Type':        meta.mimeType || 'application/octet-stream',
-      'Content-Disposition': contentDisposition(meta.filename),
-      'Content-Length':      String(meta.size),
-    },
-  });
 }
 
 // RFC 6266 / RFC 5987: provide an ASCII fallback and a UTF-8 encoded variant.
