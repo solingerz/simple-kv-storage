@@ -619,10 +619,15 @@
       const xhr = new XMLHttpRequest();
       xhr.open('POST', '/api/upload');
       xhr.withCredentials = true;
+      let raf = 0, latest = 0;
       xhr.upload.addEventListener('progress', e => {
-        if (e.lengthComputable) onProgress(e.loaded / e.total * 100);
+        if (!e.lengthComputable) return;
+        latest = e.loaded / e.total * 100;
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; onProgress(latest); });
       });
       xhr.addEventListener('load', () => {
+        if (raf) { cancelAnimationFrame(raf); raf = 0; }
         try { resolve(xhr.responseText ? JSON.parse(xhr.responseText) : null); }
         catch (err) { reject(err); }
       });
@@ -928,9 +933,11 @@
         pctEl = statusEl.querySelector('.qpct');
       }
       try {
+        let lastPct = -1;
         const data = await uploadFile(f, pct => {
           if (fillEl) fillEl.setAttribute('stroke-dashoffset', String(100 - pct));
-          if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+          const p = Math.round(pct);
+          if (p !== lastPct && pctEl) { lastPct = p; pctEl.textContent = p + '%'; }
         });
         if (data && data.success) {
           if (statusEl) {
