@@ -4,255 +4,569 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FileVault</title>
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border-color: hsl(var(--border)); }
 
     :root {
-      --bg:       #0f1117;
-      --surface:  #1a1d27;
-      --border:   #2a2d3a;
-      --text:     #e2e8f0;
-      --muted:    #7c85a0;
-      --accent:   #6366f1;
-      --accent-h: #818cf8;
-      --danger:   #ef4444;
-      --danger-h: #f87171;
-      --success:  #22c55e;
-      --warn:     #f59e0b;
-      --radius:   10px;
+      --background: 0 0% 100%;
+      --foreground: 240 10% 3.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 240 10% 3.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 240 10% 3.9%;
+      --primary: 262.1 83.3% 57.8%;
+      --primary-foreground: 210 20% 98%;
+      --secondary: 240 4.8% 95.9%;
+      --secondary-foreground: 240 5.9% 10%;
+      --muted: 240 4.8% 95.9%;
+      --muted-foreground: 240 3.8% 46.1%;
+      --accent: 240 4.8% 95.9%;
+      --accent-foreground: 240 5.9% 10%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 0 0% 98%;
+      --success: 142.1 76.2% 36.3%;
+      --warning: 38 92% 50%;
+      --border: 240 5.9% 90%;
+      --input: 240 5.9% 90%;
+      --ring: 262.1 83.3% 57.8%;
+      --radius: 0.5rem;
     }
 
+    .dark {
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 240 10% 3.9%;
+      --card-foreground: 0 0% 98%;
+      --popover: 240 10% 3.9%;
+      --popover-foreground: 0 0% 98%;
+      --primary: 263.4 70% 50.4%;
+      --primary-foreground: 210 20% 98%;
+      --secondary: 240 3.7% 15.9%;
+      --secondary-foreground: 0 0% 98%;
+      --muted: 240 3.7% 15.9%;
+      --muted-foreground: 240 5% 64.9%;
+      --accent: 240 3.7% 15.9%;
+      --accent-foreground: 0 0% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 0 0% 98%;
+      --success: 142.1 70.6% 45.3%;
+      --warning: 38 92% 50%;
+      --border: 240 3.7% 15.9%;
+      --input: 240 3.7% 15.9%;
+      --ring: 263.4 70% 50.4%;
+    }
+
+    html { font-family: 'Inter var', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
       font-size: 14px;
+      line-height: 1.5;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     }
 
-    .app { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+    button { font-family: inherit; cursor: pointer; }
+    input { font-family: inherit; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px; }
 
     /* ---- Header ---- */
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
+    .app-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 32px; gap: 16px; flex-wrap: wrap;
     }
-    .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; flex: 1; }
-    .header h1 span { color: var(--accent); }
-    .btn-upload {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      padding: 9px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.15s;
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      display: inline-flex; align-items: center; justify-content: center;
     }
-    .btn-upload:hover { background: var(--accent-h); }
+    .brand-title {
+      font-size: 20px; font-weight: 600; letter-spacing: -0.02em;
+      color: hsl(var(--foreground));
+    }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
 
-    /* ---- Storage bar ---- */
-    .storage-bar-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 18px;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
+    /* ---- Icon ---- */
+    .icon {
+      width: 16px; height: 16px; flex-shrink: 0;
+      stroke: currentColor; fill: none; stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round;
     }
-    .storage-label { font-size: 13px; color: var(--muted); flex: 1; white-space: nowrap; }
-    .storage-label strong { color: var(--text); }
-    .bar-track { flex: 2; min-width: 200px; height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.4s ease; }
-    .bar-fill.warn   { background: var(--warn); }
-    .bar-fill.danger { background: var(--danger); }
+    .icon-lg { width: 20px; height: 20px; }
+    .icon-xl { width: 32px; height: 32px; }
 
-    /* ---- Upload panel ---- */
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
+    /* ---- Button ---- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      height: 36px; padding: 0 14px;
+      border: 1px solid transparent; border-radius: calc(var(--radius) - 2px);
+      font-size: 13px; font-weight: 500; white-space: nowrap;
+      transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+      outline: none;
+    }
+    .btn:focus-visible { box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring)); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+    .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+    .btn-primary:hover { background: hsl(var(--primary) / 0.9); }
+
+    .btn-secondary { background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
+    .btn-secondary:hover { background: hsl(var(--secondary) / 0.8); }
+
+    .btn-outline {
+      background: transparent; color: hsl(var(--foreground));
+      border-color: hsl(var(--border));
+    }
+    .btn-outline:hover { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+
+    .btn-ghost { background: transparent; color: hsl(var(--foreground)); }
+    .btn-ghost:hover { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+
+    .btn-destructive { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
+    .btn-destructive:hover { background: hsl(var(--destructive) / 0.9); }
+
+    .btn-sm { height: 32px; padding: 0 10px; font-size: 12px; border-radius: calc(var(--radius) - 4px); }
+    .btn-icon { width: 36px; padding: 0; }
+    .btn-icon.btn-sm { width: 32px; }
+
+    /* ---- Card ---- */
+    .card {
+      background: hsl(var(--card));
+      color: hsl(var(--card-foreground));
+      border: 1px solid hsl(var(--border));
       border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 24px;
+      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+    .card-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; padding: 24px 24px 16px; flex-wrap: wrap;
+    }
+    .card-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: hsl(var(--foreground)); }
+    .card-description { font-size: 13px; color: hsl(var(--muted-foreground)); margin-top: 4px; }
+    .card-content { padding: 24px; }
+
+    /* ---- Stats grid ---- */
+    .stats-grid {
+      display: grid; gap: 16px; margin-bottom: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+    .stat-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .stat-label {
+      font-size: 12px; font-weight: 500;
+      color: hsl(var(--muted-foreground));
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .stat-value { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: hsl(var(--foreground)); }
+    .stat-hint { font-size: 12px; color: hsl(var(--muted-foreground)); margin-top: 8px; }
+    .stat-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; margin-top: 8px;
+    }
+    .stat-sublabel { font-size: 12px; color: hsl(var(--muted-foreground)); }
+
+    /* ---- Progress ---- */
+    .progress {
+      width: 100%; height: 8px;
+      background: hsl(var(--secondary));
+      border-radius: 99px; overflow: hidden;
+      margin-top: 12px;
+    }
+    .progress-indicator {
+      height: 100%; background: hsl(var(--primary));
+      transition: width 0.4s ease, background-color 0.2s;
+      border-radius: 99px;
+    }
+    .progress-indicator.warn { background: hsl(var(--warning)); }
+    .progress-indicator.danger { background: hsl(var(--destructive)); }
+
+    /* ---- Input ---- */
+    .input {
+      display: flex; width: 100%; height: 36px;
+      padding: 0 12px;
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--input));
+      border-radius: calc(var(--radius) - 2px);
+      color: hsl(var(--foreground));
+      font-size: 13px; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input::placeholder { color: hsl(var(--muted-foreground)); }
+    .input:focus-visible {
+      border-color: hsl(var(--ring));
+      box-shadow: 0 0 0 3px hsl(var(--ring) / 0.15);
+    }
+
+    .search-wrapper { position: relative; width: 260px; max-width: 100%; }
+    .search-wrapper .icon {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: hsl(var(--muted-foreground)); pointer-events: none;
+    }
+    .search-wrapper .input { padding-left: 32px; }
+
+    /* ---- Table ---- */
+    .table-container { border-top: 1px solid hsl(var(--border)); overflow-x: auto; }
+    .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table thead th {
+      text-align: left; padding: 12px 16px;
+      font-size: 12px; font-weight: 500;
+      color: hsl(var(--muted-foreground));
+      border-bottom: 1px solid hsl(var(--border));
+      white-space: nowrap; vertical-align: middle;
+    }
+    .table tbody tr { border-bottom: 1px solid hsl(var(--border)); transition: background 0.15s; }
+    .table tbody tr:last-child { border-bottom: none; }
+    .table tbody tr:hover { background: hsl(var(--muted) / 0.5); }
+    .table td { padding: 14px 16px; vertical-align: middle; }
+    .text-right { text-align: right; }
+
+    .file-cell { display: flex; align-items: center; gap: 10px; }
+    .file-cell-icon {
+      width: 32px; height: 32px; flex-shrink: 0;
+      border-radius: 6px;
+      background: hsl(var(--secondary));
+      color: hsl(var(--muted-foreground));
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .file-name {
+      font-weight: 500; color: hsl(var(--foreground));
+      max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .mime-text {
+      color: hsl(var(--muted-foreground)); font-size: 12px;
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    }
+    .date-text { color: hsl(var(--muted-foreground)); font-size: 12px; white-space: nowrap; }
+    .size-text { color: hsl(var(--foreground)); font-variant-numeric: tabular-nums; }
+
+    /* ---- Badge ---- */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; font-size: 11px; font-weight: 500;
+      border-radius: 99px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge-public {
+      background: hsl(var(--success) / 0.12);
+      color: hsl(var(--success));
+      border-color: hsl(var(--success) / 0.3);
+    }
+    .badge-private {
+      background: hsl(var(--muted));
+      color: hsl(var(--muted-foreground));
+      border-color: hsl(var(--border));
+    }
+    .badge .icon { width: 10px; height: 10px; stroke-width: 2.5; }
+
+    .row-actions { display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end; }
+
+    /* ---- Empty / loading ---- */
+    .empty-state { padding: 64px 24px; text-align: center; }
+    .empty-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: hsl(var(--secondary));
+      color: hsl(var(--muted-foreground));
+      margin: 0 auto 16px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .empty-icon .icon { width: 24px; height: 24px; }
+    .empty-title { font-size: 15px; font-weight: 500; color: hsl(var(--foreground)); margin-bottom: 4px; }
+    .empty-description { font-size: 13px; color: hsl(var(--muted-foreground)); }
+
+    .skeleton-list { padding: 16px; }
+    .skeleton {
+      height: 44px; border-radius: 6px;
+      background: linear-gradient(90deg,
+        hsl(var(--muted) / 0.5) 0%,
+        hsl(var(--muted)) 50%,
+        hsl(var(--muted) / 0.5) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+      margin-bottom: 8px;
+    }
+    .skeleton:last-child { margin-bottom: 0; }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ---- Dialog ---- */
+    .dialog-overlay {
+      position: fixed; inset: 0; z-index: 50;
+      background: hsl(0 0% 0% / 0.6);
+      backdrop-filter: blur(2px);
       display: none;
+      align-items: center; justify-content: center;
+      padding: 16px;
+      animation: fadeIn 0.15s ease;
     }
-    .panel.open { display: block; }
-    .panel h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-
-    .drop-zone {
-      border: 2px dashed var(--border);
+    .dialog-overlay.open { display: flex; }
+    .dialog {
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--border));
       border-radius: var(--radius);
-      padding: 48px 24px;
-      text-align: center;
+      box-shadow: 0 20px 50px -10px rgb(0 0 0 / 0.4);
+      width: 100%; max-width: 560px;
+      max-height: calc(100vh - 32px);
+      display: flex; flex-direction: column;
+      animation: dialogIn 0.15s ease;
+    }
+    .dialog-header {
+      padding: 24px 24px 16px; position: relative;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .dialog-title { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+    .dialog-description { font-size: 13px; color: hsl(var(--muted-foreground)); }
+    .dialog-close {
+      position: absolute; top: 16px; right: 16px;
+      width: 28px; height: 28px; border-radius: 6px;
+      background: transparent; border: none;
+      color: hsl(var(--muted-foreground));
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .dialog-close:hover { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+    .dialog-content { padding: 0 24px 24px; overflow: auto; }
+    .dialog-footer {
+      padding: 16px 24px;
+      border-top: 1px solid hsl(var(--border));
+      display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes dialogIn {
+      from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ---- Drop zone ---- */
+    .drop-zone {
+      border: 2px dashed hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 36px 24px; text-align: center;
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s;
     }
     .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--accent);
-      background: rgba(99,102,241,0.05);
+      border-color: hsl(var(--primary));
+      background: hsl(var(--primary) / 0.04);
     }
-    .drop-zone .icon { font-size: 36px; margin-bottom: 10px; }
-    .drop-zone p { color: var(--muted); font-size: 13px; }
-    .drop-zone p strong { color: var(--text); }
+    .drop-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: hsl(var(--secondary));
+      color: hsl(var(--muted-foreground));
+      margin: 0 auto 12px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .drop-icon .icon { width: 24px; height: 24px; }
+    .drop-title { font-size: 14px; font-weight: 500; color: hsl(var(--foreground)); }
+    .drop-hint { font-size: 13px; color: hsl(var(--muted-foreground)); margin-top: 4px; }
+    .drop-meta { font-size: 12px; color: hsl(var(--muted-foreground)); margin-top: 8px; }
     #file-input { display: none; }
 
-    .file-queue { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .file-queue { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
     .file-item {
       display: flex; align-items: center; gap: 12px;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px 14px; font-size: 13px;
+      padding: 10px 14px;
+      background: hsl(var(--secondary) / 0.4);
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) - 2px);
+      font-size: 13px;
     }
-    .file-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .file-item .size { color: var(--muted); white-space: nowrap; }
-    .file-item .status { font-size: 12px; white-space: nowrap; }
-    .file-item .status.ok   { color: var(--success); }
-    .file-item .status.err  { color: var(--danger); }
-    .file-item .status.busy { color: var(--warn); }
+    .file-item .file-cell-icon { width: 28px; height: 28px; border-radius: 5px; background: hsl(var(--background)); }
+    .file-item .icon { width: 14px; height: 14px; }
+    .file-item .qname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: hsl(var(--foreground)); }
+    .file-item .qsize { color: hsl(var(--muted-foreground)); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .file-item .qstatus { font-size: 12px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+    .file-item .qstatus.ok   { color: hsl(var(--success)); }
+    .file-item .qstatus.err  { color: hsl(var(--destructive)); }
+    .file-item .qstatus.busy { color: hsl(var(--warning)); }
 
-    .upload-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
-    .btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-    .btn:disabled { opacity: 0.45; cursor: default; }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:not(:disabled):hover { background: var(--accent-h); }
-    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-    .btn-ghost:hover { color: var(--text); }
-
-    /* ---- File table ---- */
-    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .table-header { display: flex; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); gap: 12px; }
-    .table-title { font-size: 15px; font-weight: 600; flex: 1; }
-    .search-input {
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-      color: var(--text); padding: 7px 12px; font-size: 13px; outline: none; width: 200px;
-      transition: border-color 0.15s;
+    /* ---- Toast ---- */
+    .toast-container {
+      position: fixed; bottom: 16px; right: 16px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 9999; max-width: calc(100vw - 32px);
     }
-    .search-input:focus { border-color: var(--accent); }
-    .search-input::placeholder { color: var(--muted); }
-
-    table { width: 100%; border-collapse: collapse; }
-    thead th {
-      text-align: left; padding: 10px 16px; font-size: 11px;
-      text-transform: uppercase; letter-spacing: 0.06em;
-      color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap;
-    }
-    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: rgba(255,255,255,0.03); }
-    td { padding: 12px 16px; vertical-align: middle; }
-
-    .file-name { font-weight: 500; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .mime { color: var(--muted); font-size: 12px; font-family: monospace; }
-    .date { color: var(--muted); font-size: 12px; white-space: nowrap; }
-
-    .badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 99px; padding: 3px 10px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-    .badge.public  { background: rgba(34,197,94,0.15);  color: var(--success); }
-    .badge.private { background: rgba(239,68,68,0.12);  color: #f87171; }
-
-    .actions { display: flex; align-items: center; gap: 6px; }
-    .icon-btn {
-      background: transparent; border: 1px solid var(--border); border-radius: 7px;
-      color: var(--muted); padding: 5px 9px; font-size: 12px; cursor: pointer;
-      transition: color 0.15s, border-color 0.15s, background 0.15s; white-space: nowrap;
-    }
-    .icon-btn:hover { color: var(--text); border-color: var(--text); }
-    .icon-btn.del:hover { color: var(--danger); border-color: var(--danger); background: rgba(239,68,68,0.08); }
-    .icon-btn.copy-ok { color: var(--success); border-color: var(--success); }
-    .icon-btn:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
-
-    .empty-state { text-align: center; padding: 56px 24px; color: var(--muted); }
-    .empty-state .big { font-size: 40px; margin-bottom: 12px; }
-    .empty-state p { font-size: 14px; }
-
-    .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
     .toast {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-      padding: 12px 18px; font-size: 13px; max-width: 320px;
-      animation: slideIn 0.2s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      display: flex; align-items: flex-start; gap: 10px;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) - 2px);
+      padding: 12px 14px; font-size: 13px;
+      width: 320px; max-width: 100%;
+      box-shadow: 0 10px 30px -5px rgb(0 0 0 / 0.25);
+      animation: slideIn 0.2s ease;
     }
-    .toast.ok  { border-left: 3px solid var(--success); }
-    .toast.err { border-left: 3px solid var(--danger); }
+    .toast-icon {
+      width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px;
+    }
+    .toast.ok .toast-icon  { color: hsl(var(--success)); }
+    .toast.err .toast-icon { color: hsl(var(--destructive)); }
+    .toast-body { flex: 1; line-height: 1.4; word-break: break-word; }
     @keyframes slideIn {
-      from { opacity: 0; transform: translateX(16px); }
+      from { opacity: 0; transform: translateX(12px); }
       to   { opacity: 1; transform: translateX(0); }
     }
 
-    @media (max-width: 700px) {
+    /* ---- Responsive ---- */
+    @media (max-width: 760px) {
       .col-mime, .col-date { display: none; }
-      .search-input { width: 140px; }
+      .card-header { padding: 20px 16px 12px; }
+      .card-content { padding: 16px; }
+      .table td { padding: 12px; }
+      .table thead th { padding: 10px 12px; }
+      .file-name { max-width: 160px; }
+      .search-wrapper { width: 100%; }
+      .container { padding: 20px 16px 48px; }
     }
+
+    body.no-scroll { overflow: hidden; }
   </style>
 </head>
 <body>
-<div class="app">
+<!-- SVG icon sprites -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-vault" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M12 7v2"/><path d="M12 15v2"/><path d="M7 12h2"/><path d="M15 12h2"/>
+    </symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></symbol>
+    <symbol id="i-cloud-upload" viewBox="0 0 24 24"><path d="M12 13v8"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/><path d="m8 17 4-4 4 4"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></symbol>
+    <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+  </defs>
+</svg>
 
-  <div class="header">
-    <h1>File<span>Vault</span></h1>
-    <button class="btn-upload" id="toggleUpload">&#8679; Upload files</button>
-  </div>
+<div class="container">
 
-  <div class="storage-bar-wrap">
-    <span class="storage-label">Storage: <strong id="used-label">—</strong> / 1 GB</span>
-    <div class="bar-track">
-      <div class="bar-fill" id="storage-bar" style="width:0%"></div>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon"><svg class="icon icon-lg"><use href="#i-vault"/></svg></div>
+      <h1 class="brand-title">FileVault</h1>
     </div>
-    <span id="file-count-label" style="color:var(--muted);font-size:13px;white-space:nowrap">— files</span>
-  </div>
+    <div class="header-actions">
+      <button class="btn btn-outline btn-icon btn-sm" id="theme-toggle" aria-label="Toggle theme">
+        <svg class="icon"><use href="#i-sun" id="theme-icon"/></svg>
+      </button>
+      <button class="btn btn-primary btn-sm" id="toggleUpload">
+        <svg class="icon"><use href="#i-upload"/></svg>
+        Upload files
+      </button>
+    </div>
+  </header>
 
-  <div class="panel" id="upload-panel">
-    <h2>Upload files</h2>
-    <div class="drop-zone" id="drop-zone">
-      <input type="file" id="file-input" multiple />
-      <div class="icon">&#128462;</div>
-      <p><strong>Click to choose files</strong> or drag &amp; drop here</p>
-      <p style="margin-top:6px">Max 20 MB per file &mdash; uploaded files are <strong>private</strong> by default</p>
-    </div>
-    <div class="file-queue" id="file-queue"></div>
-    <div class="upload-actions" id="upload-actions" style="display:none">
-      <button class="btn btn-primary" id="btn-do-upload">Upload all</button>
-      <button class="btn btn-ghost" id="btn-clear-queue">Clear</button>
-    </div>
-  </div>
-
-  <div class="table-wrap">
-    <div class="table-header">
-      <span class="table-title">Files</span>
-      <input class="search-input" id="search" type="text" placeholder="Search files…" />
-    </div>
-    <div id="table-body-wrap">
-      <div class="empty-state" id="loading-state">
-        <div class="big">&#8987;</div>
-        <p>Loading&hellip;</p>
+  <div class="stats-grid">
+    <div class="card">
+      <div class="card-content">
+        <div class="stat-header">
+          <span class="stat-label">Storage used</span>
+          <span class="stat-value" id="used-label">—</span>
+        </div>
+        <div class="progress">
+          <div class="progress-indicator" id="storage-bar" style="width:0%"></div>
+        </div>
+        <div class="stat-footer">
+          <span class="stat-sublabel">of 1 GB total</span>
+          <span class="stat-sublabel" id="storage-pct">0%</span>
+        </div>
       </div>
-      <table id="file-table" style="display:none">
+    </div>
+    <div class="card">
+      <div class="card-content">
+        <div class="stat-header">
+          <span class="stat-label">Total files</span>
+          <span class="stat-value" id="file-count-label">—</span>
+        </div>
+        <p class="stat-hint">Private by default. Toggle visibility to share.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Files</h2>
+        <p class="card-description">Manage your uploaded files</p>
+      </div>
+      <div class="search-wrapper">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <input class="input" id="search" type="text" placeholder="Search files…" />
+      </div>
+    </div>
+    <div class="table-container" id="table-body-wrap">
+      <div id="loading-state" class="skeleton-list">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+      <table class="table" id="file-table" style="display:none">
         <thead>
           <tr>
             <th>Filename</th>
-            <th class="col-mime">MIME type</th>
+            <th class="col-mime">Type</th>
             <th>Size</th>
             <th class="col-date">Uploaded</th>
             <th>Visibility</th>
-            <th>Actions</th>
+            <th class="text-right">Actions</th>
           </tr>
         </thead>
         <tbody id="file-tbody"></tbody>
       </table>
       <div class="empty-state" id="empty-state" style="display:none">
-        <div class="big">&#128193;</div>
-        <p>No files yet. Upload something!</p>
+        <div class="empty-icon"><svg class="icon"><use href="#i-folder"/></svg></div>
+        <p class="empty-title">No files yet</p>
+        <p class="empty-description">Upload files to get started</p>
       </div>
     </div>
   </div>
+</div>
 
+<div class="dialog-overlay" id="upload-panel" role="dialog" aria-modal="true" aria-labelledby="upload-dialog-title">
+  <div class="dialog">
+    <div class="dialog-header">
+      <h2 class="dialog-title" id="upload-dialog-title">Upload files</h2>
+      <p class="dialog-description">Drop files here or click to browse. Max 20 MB per file — uploaded files are private by default.</p>
+      <button class="dialog-close" id="closeUpload" aria-label="Close">
+        <svg class="icon"><use href="#i-x"/></svg>
+      </button>
+    </div>
+    <div class="dialog-content">
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="file-input" multiple />
+        <div class="drop-icon"><svg class="icon"><use href="#i-cloud-upload"/></svg></div>
+        <p class="drop-title">Click to choose files</p>
+        <p class="drop-hint">or drag &amp; drop here</p>
+      </div>
+      <div class="file-queue" id="file-queue"></div>
+    </div>
+    <div class="dialog-footer" id="upload-actions" style="display:none">
+      <button class="btn btn-ghost btn-sm" id="btn-clear-queue">Clear</button>
+      <button class="btn btn-primary btn-sm" id="btn-do-upload">Upload all</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast-container" id="toasts"></div>
@@ -261,11 +575,24 @@
 (function () {
   'use strict';
 
-  // ---------- API ----------
-  // All requests include credentials:'include' so the browser attaches any
-  // cached HTTP Basic Auth credentials. The server returns 401 when the
-  // Authorization header is missing or invalid.
+  // ---------- Theme ----------
+  const THEME_KEY = 'filevault-theme';
+  function applyTheme(t) {
+    const dark = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', dark);
+    const ico = document.getElementById('theme-icon');
+    if (ico) ico.setAttribute('href', dark ? '#i-sun' : '#i-moon');
+  }
+  const savedTheme = localStorage.getItem(THEME_KEY) || 'system';
+  applyTheme(savedTheme);
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const isDark = document.documentElement.classList.contains('dark');
+    const next = isDark ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+  });
 
+  // ---------- API ----------
   async function api(path, opts = {}) {
     const res = await fetch(path, { credentials: 'include', ...opts });
     if (res.status === 204) return null;
@@ -273,7 +600,6 @@
   }
 
   // ---------- Helpers ----------
-
   function fmt(bytes) {
     if (bytes === 0) return '0 B';
     const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
@@ -297,29 +623,32 @@
   function toast(msg, type = 'ok') {
     const el = document.createElement('div');
     el.className = 'toast ' + type;
-    el.textContent = msg;
+    el.innerHTML = `
+      <svg class="icon toast-icon"><use href="#${type === 'ok' ? 'i-check-circle' : 'i-alert'}"/></svg>
+      <div class="toast-body"></div>
+    `;
+    el.querySelector('.toast-body').textContent = msg;
     document.getElementById('toasts').appendChild(el);
     setTimeout(() => el.remove(), 3500);
   }
 
   // ---------- State ----------
-
   let allFiles = [];
 
   function updateStorageBar(usedBytes, totalBytes) {
     const pct = Math.min((usedBytes / totalBytes) * 100, 100);
     const bar = document.getElementById('storage-bar');
     bar.style.width = pct + '%';
-    bar.className = 'bar-fill' + (pct >= 90 ? ' danger' : pct >= 70 ? ' warn' : '');
+    bar.className = 'progress-indicator' + (pct >= 90 ? ' danger' : pct >= 70 ? ' warn' : '');
     document.getElementById('used-label').textContent = fmt(usedBytes);
+    document.getElementById('storage-pct').textContent = pct.toFixed(pct < 10 ? 1 : 0) + '%';
   }
 
   function updateFileCount(n) {
-    document.getElementById('file-count-label').textContent = n + ' file' + (n !== 1 ? 's' : '');
+    document.getElementById('file-count-label').textContent = n;
   }
 
   // ---------- File list ----------
-
   async function loadFiles() {
     document.getElementById('loading-state').style.display = '';
     document.getElementById('file-table').style.display = 'none';
@@ -338,6 +667,12 @@
     }
   }
 
+  function visibilityBadge(isPublic) {
+    return isPublic
+      ? `<span class="badge badge-public"><svg class="icon"><use href="#i-unlock"/></svg>Public</span>`
+      : `<span class="badge badge-private"><svg class="icon"><use href="#i-lock"/></svg>Private</span>`;
+  }
+
   function renderTable(filter) {
     const tbody = document.getElementById('file-tbody');
     const filtered = filter
@@ -347,6 +682,13 @@
     if (!filtered.length) {
       document.getElementById('file-table').style.display = 'none';
       document.getElementById('empty-state').style.display = '';
+      if (filter) {
+        document.querySelector('#empty-state .empty-title').textContent = 'No results';
+        document.querySelector('#empty-state .empty-description').textContent = `No files match "${filter}"`;
+      } else {
+        document.querySelector('#empty-state .empty-title').textContent = 'No files yet';
+        document.querySelector('#empty-state .empty-description').textContent = 'Upload files to get started';
+      }
       return;
     }
 
@@ -358,26 +700,34 @@
     for (const f of sorted) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><div class="file-name"></div></td>
-        <td class="col-mime"><span class="mime"></span></td>
-        <td>${fmt(f.size)}</td>
-        <td class="col-date"><span class="date">${fmtDate(f.uploadedAt)}</span></td>
         <td>
-          <span class="badge ${f.isPublic ? 'public' : 'private'}" id="badge-${f.hash}">
-            ${f.isPublic ? '&#128275; Public' : '&#128274; Private'}
-          </span>
+          <div class="file-cell">
+            <div class="file-cell-icon"><svg class="icon"><use href="#i-file"/></svg></div>
+            <div class="file-name"></div>
+          </div>
         </td>
-        <td>
-          <div class="actions">
-            <button class="icon-btn" id="copy-${f.hash}" data-action="copy" data-hash="${f.hash}"
-              ${f.isPublic ? '' : 'disabled title="Make file public to copy link"'}>
-              &#128203; Copy link
+        <td class="col-mime"><span class="mime-text"></span></td>
+        <td><span class="size-text">${fmt(f.size)}</span></td>
+        <td class="col-date"><span class="date-text">${fmtDate(f.uploadedAt)}</span></td>
+        <td id="badge-${f.hash}">${visibilityBadge(f.isPublic)}</td>
+        <td class="text-right">
+          <div class="row-actions">
+            <button class="btn btn-ghost btn-sm btn-icon" id="copy-${f.hash}"
+              data-action="copy" data-hash="${f.hash}"
+              aria-label="Copy link" title="${f.isPublic ? 'Copy public link' : 'Make file public to copy link'}"
+              ${f.isPublic ? '' : 'disabled'}>
+              <svg class="icon"><use href="#i-copy"/></svg>
             </button>
-            <button class="icon-btn" id="vis-${f.hash}" data-action="vis" data-hash="${f.hash}">
-              ${f.isPublic ? '&#128274; Make private' : '&#128275; Make public'}
+            <button class="btn btn-ghost btn-sm btn-icon" id="vis-${f.hash}"
+              data-action="vis" data-hash="${f.hash}"
+              aria-label="${f.isPublic ? 'Make private' : 'Make public'}"
+              title="${f.isPublic ? 'Make private' : 'Make public'}">
+              <svg class="icon"><use href="#${f.isPublic ? 'i-eye-off' : 'i-eye'}"/></svg>
             </button>
-            <button class="icon-btn del" data-action="del" data-hash="${f.hash}">
-              &#128465; Delete
+            <button class="btn btn-ghost btn-sm btn-icon"
+              data-action="del" data-hash="${f.hash}"
+              aria-label="Delete" title="Delete">
+              <svg class="icon"><use href="#i-trash"/></svg>
             </button>
           </div>
         </td>
@@ -385,13 +735,11 @@
       const nameEl = tr.querySelector('.file-name');
       nameEl.textContent = f.filename;
       nameEl.title = f.filename;
-      tr.querySelector('.mime').textContent = f.mimeType;
+      tr.querySelector('.mime-text').textContent = f.mimeType;
       tbody.appendChild(tr);
     }
   }
 
-  // Event delegation for row actions — avoids injecting filenames/hashes into
-  // inline handlers. Hashes are stable hex, but filenames are user-controlled.
   document.getElementById('file-tbody').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-action]');
     if (!btn) return;
@@ -404,7 +752,6 @@
   });
 
   // ---------- Copy link ----------
-
   async function copyLink(hash, filename) {
     const file = allFiles.find(f => f.hash === hash);
     if (!file || !file.isPublic || !file.shareId) {
@@ -415,16 +762,17 @@
     try {
       await navigator.clipboard.writeText(url);
       const btn = document.getElementById('copy-' + hash);
-      btn.textContent = '✓ Copied!';
-      btn.classList.add('copy-ok');
-      setTimeout(() => { btn.innerHTML = '&#128203; Copy link'; btn.classList.remove('copy-ok'); }, 2000);
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<svg class="icon"><use href="#i-check"/></svg>';
+      btn.style.color = 'hsl(var(--success))';
+      toast('Link copied to clipboard');
+      setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
     } catch {
       toast('Copy failed — please copy manually:\n' + url, 'err');
     }
   }
 
   // ---------- Toggle visibility ----------
-
   async function toggleVis(hash) {
     const btn = document.getElementById('vis-' + hash);
     btn.disabled = true;
@@ -435,18 +783,17 @@
       const idx = allFiles.findIndex(x => x.hash === hash);
       if (idx !== -1) allFiles[idx] = f;
 
-      const badge = document.getElementById('badge-' + hash);
-      if (badge) {
-        badge.className = 'badge ' + (f.isPublic ? 'public' : 'private');
-        badge.innerHTML = f.isPublic ? '&#128275; Public' : '&#128274; Private';
-      }
-      btn.innerHTML = f.isPublic ? '&#128274; Make private' : '&#128275; Make public';
+      const badgeCell = document.getElementById('badge-' + hash);
+      if (badgeCell) badgeCell.innerHTML = visibilityBadge(f.isPublic);
+
+      btn.innerHTML = `<svg class="icon"><use href="#${f.isPublic ? 'i-eye-off' : 'i-eye'}"/></svg>`;
+      btn.setAttribute('aria-label', f.isPublic ? 'Make private' : 'Make public');
+      btn.title = f.isPublic ? 'Make private' : 'Make public';
 
       const copyBtn = document.getElementById('copy-' + hash);
       if (copyBtn) {
         copyBtn.disabled = !f.isPublic;
-        if (f.isPublic) copyBtn.removeAttribute('title');
-        else copyBtn.title = 'Make file public to copy link';
+        copyBtn.title = f.isPublic ? 'Copy public link' : 'Make file public to copy link';
       }
       toast(f.isPublic ? 'File is now public' : 'File is now private');
     } catch (e) {
@@ -457,7 +804,6 @@
   }
 
   // ---------- Delete ----------
-
   async function deleteFile(hash, filename) {
     if (!confirm('Delete "' + filename + '"? This cannot be undone.')) return;
     try {
@@ -474,7 +820,6 @@
   }
 
   // ---------- Upload ----------
-
   let pendingFiles = [];
   const MAX = 20 * 1024 * 1024;
 
@@ -482,6 +827,7 @@
   const fileInput     = document.getElementById('file-input');
   const fileQueue     = document.getElementById('file-queue');
   const uploadActions = document.getElementById('upload-actions');
+  const uploadPanel   = document.getElementById('upload-panel');
 
   dropZone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', () => addFiles(Array.from(fileInput.files)));
@@ -513,10 +859,11 @@
       const div = document.createElement('div');
       div.className = 'file-item';
       div.innerHTML = `
-        <span class="name" title="${esc(f.name)}">${esc(f.name)}</span>
-        <span class="size">${fmt(f.size)}</span>
-        <span class="status ${oversized ? 'err' : ''}" id="${queueId(f.name)}">
-          ${oversized ? '&#9888; Too large (max 20 MB)' : 'Ready'}
+        <div class="file-cell-icon"><svg class="icon"><use href="#i-file"/></svg></div>
+        <span class="qname" title="${esc(f.name)}">${esc(f.name)}</span>
+        <span class="qsize">${fmt(f.size)}</span>
+        <span class="qstatus ${oversized ? 'err' : ''}" id="${queueId(f.name)}">
+          ${oversized ? '<svg class="icon"><use href="#i-alert"/></svg>Too large (max 20 MB)' : 'Ready'}
         </span>
       `;
       fileQueue.appendChild(div);
@@ -538,21 +885,27 @@
     let successCount = 0;
     for (const f of validFiles) {
       const statusEl = document.getElementById(queueId(f.name));
-      if (statusEl) { statusEl.textContent = 'Uploading\u2026'; statusEl.className = 'status busy'; }
+      if (statusEl) {
+        statusEl.innerHTML = '<svg class="icon"><use href="#i-loader"/></svg>Uploading…';
+        statusEl.className = 'qstatus busy';
+      }
       try {
         const form = new FormData();
         form.append('file', f);
         const data = await api('/api/upload', { method: 'POST', body: form });
         if (data && data.success) {
-          if (statusEl) { statusEl.innerHTML = '&#10003; Done'; statusEl.className = 'status ok'; }
+          if (statusEl) {
+            statusEl.innerHTML = '<svg class="icon"><use href="#i-check"/></svg>Done';
+            statusEl.className = 'qstatus ok';
+          }
           successCount++;
         } else {
           const msg = data.error || 'Upload failed';
-          if (statusEl) { statusEl.textContent = msg; statusEl.className = 'status err'; }
+          if (statusEl) { statusEl.textContent = msg; statusEl.className = 'qstatus err'; }
           toast(f.name + ': ' + msg, 'err');
         }
       } catch (e) {
-        if (statusEl) { statusEl.textContent = 'Error'; statusEl.className = 'status err'; }
+        if (statusEl) { statusEl.textContent = 'Error'; statusEl.className = 'qstatus err'; }
         toast('Upload error: ' + e.message, 'err');
       }
     }
@@ -563,13 +916,25 @@
       pendingFiles = pendingFiles.filter(f => f.size > MAX);
       fileInput.value = '';
       renderQueue();
-      if (!pendingFiles.length) document.getElementById('upload-panel').classList.remove('open');
+      if (!pendingFiles.length) closeDialog();
     }
     uploadBtn.disabled = false;
   });
 
-  document.getElementById('toggleUpload').addEventListener('click', () => {
-    document.getElementById('upload-panel').classList.toggle('open');
+  // ---------- Dialog ----------
+  function openDialog() {
+    uploadPanel.classList.add('open');
+    document.body.classList.add('no-scroll');
+  }
+  function closeDialog() {
+    uploadPanel.classList.remove('open');
+    document.body.classList.remove('no-scroll');
+  }
+  document.getElementById('toggleUpload').addEventListener('click', openDialog);
+  document.getElementById('closeUpload').addEventListener('click', closeDialog);
+  uploadPanel.addEventListener('click', e => { if (e.target === uploadPanel) closeDialog(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && uploadPanel.classList.contains('open')) closeDialog();
   });
 
   document.getElementById('search').addEventListener('input', e => {
@@ -577,9 +942,7 @@
   });
 
   // ---------- Bootstrap ----------
-
   loadFiles();
-
 })();
 </script>
 </body>
