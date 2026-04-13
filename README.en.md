@@ -9,7 +9,7 @@ A lightweight file hosting service deployed on EdgeOne Pages. All storage logic 
 - **File upload**: Drag-and-drop or click to browse, multi-file queue, 20 MB max per file
 - **File management**: List all files with MIME type, size, upload time, and delete support
 - **Storage stats**: Real-time used/total quota display (1 GB) with a visual progress bar
-- **Public / Private**: Files are **private by default**; toggle visibility at any time — switching to private immediately invalidates all previously shared URLs (returns 404)
+- **Public / Private**: Files are **private by default**; toggle visibility at any time — switching to private immediately invalidates all previously shared URLs (returns 404. Due to eventual consistency, the invalidation may be delayed by a few seconds)
 - **Copy direct link**: One-click copy of a shareable URL once a file is made public
 - **Auth protection**: All operations require HTTP Basic Auth, except downloading public files
 - **Share token rotation**: Each private→public toggle mints a new `shareId`, permanently breaking old URLs
