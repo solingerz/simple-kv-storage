@@ -397,6 +397,11 @@
     .file-item .qstatus.ok   { color: hsl(var(--success)); }
     .file-item .qstatus.err  { color: hsl(var(--destructive)); }
     .file-item .qstatus.busy { color: hsl(var(--warning)); }
+    .progress-ring { width: 14px; height: 14px; flex-shrink: 0; transform: rotate(-90deg); }
+    .progress-ring circle { fill: none; stroke-width: 2.5; stroke-linecap: round; }
+    .progress-ring .track { stroke: currentColor; opacity: 0.25; }
+    .progress-ring .fill  { stroke: currentColor; transition: stroke-dashoffset 0.15s linear; }
+    .qpct { font-variant-numeric: tabular-nums; }
 
     /* ---- Toast ---- */
     .toast-container {
@@ -607,6 +612,26 @@
     const res = await fetch(path, { credentials: 'include', ...opts });
     if (res.status === 204) return null;
     return res.json();
+  }
+
+  function uploadFile(file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload');
+      xhr.withCredentials = true;
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable) onProgress(e.loaded / e.total * 100);
+      });
+      xhr.addEventListener('load', () => {
+        try { resolve(xhr.responseText ? JSON.parse(xhr.responseText) : null); }
+        catch (err) { reject(err); }
+      });
+      xhr.addEventListener('error', () => reject(new Error('Network error')));
+      xhr.addEventListener('abort', () => reject(new Error('Upload aborted')));
+      const form = new FormData();
+      form.append('file', file);
+      xhr.send(form);
+    });
   }
 
   // ---------- Helpers ----------
@@ -895,14 +920,18 @@
     let successCount = 0;
     for (const f of validFiles) {
       const statusEl = document.getElementById(queueId(f.name));
+      let fillEl = null, pctEl = null;
       if (statusEl) {
-        statusEl.innerHTML = '<svg class="icon"><use href="#i-loader"/></svg>Uploading…';
+        statusEl.innerHTML = '<svg class="progress-ring" viewBox="0 0 24 24"><circle class="track" cx="12" cy="12" r="10"/><circle class="fill" cx="12" cy="12" r="10" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg><span class="qpct">0%</span>';
         statusEl.className = 'qstatus busy';
+        fillEl = statusEl.querySelector('.progress-ring .fill');
+        pctEl = statusEl.querySelector('.qpct');
       }
       try {
-        const form = new FormData();
-        form.append('file', f);
-        const data = await api('/api/upload', { method: 'POST', body: form });
+        const data = await uploadFile(f, pct => {
+          if (fillEl) fillEl.setAttribute('stroke-dashoffset', String(100 - pct));
+          if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+        });
         if (data && data.success) {
           if (statusEl) {
             statusEl.innerHTML = '<svg class="icon"><use href="#i-check"/></svg>Done';
