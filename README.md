@@ -33,9 +33,9 @@
 
 | 类型 | 代表格式 | Cache-Control |
 |---|---|---|
-| **immutable** | 图片、视频、音频、字体、CSS、JS、WASM | `public, max-age=31536000, immutable` |
-| **revalidate** | HTML、JSON、XML、纯文本、CSV | `public, max-age=0, must-revalidate` |
-| **default** | PDF、压缩包及其他二进制 | `public, max-age=86400` |
+| **immutable** | 图片、视频、音频、字体、CSS、JS、WASM | `public, max-age=31536000, immutable, no-transform` |
+| **revalidate** | HTML、JSON、XML、纯文本、CSV | `public, no-cache, must-revalidate` |
+| **default** | PDF、压缩包及其他二进制 | `public, max-age=86400, no-transform` |
 
 **ETag**：取值为 `"文件hash"`，客户端携带 `If-None-Match` 时，命中则直接返回 **304**，无需从 KV 读取文件内容。同时支持 `If-Modified-Since` / `Last-Modified` 协商（以文件上传时间为基准）。
 

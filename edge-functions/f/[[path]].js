@@ -18,9 +18,9 @@
 
 // ---------- Cache-Control policy ----------
 
-const IMMUTABLE = 'public, max-age=31536000, immutable';
-const REVALIDATE = 'public, max-age=0, must-revalidate';
-const DEFAULT_CC = 'public, max-age=86400';
+const IMMUTABLE = 'public, max-age=31536000, immutable, no-transform';
+const REVALIDATE = 'public, no-cache, must-revalidate';
+const DEFAULT_CC = 'public, max-age=86400, no-transform';
 
 /**
  * @param {string} mimeType
