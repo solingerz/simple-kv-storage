@@ -238,8 +238,17 @@
       max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .mime-text {
-      color: hsl(var(--muted-foreground)); font-size: 12px;
-      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      display: inline-flex; align-items: center;
+      padding: 2px 7px;
+      font-size: 11px; font-weight: 500;
+      font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+      font-feature-settings: 'ss01', 'ss02', 'calt' 0;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted) / 0.6);
+      border: 1px solid hsl(var(--border));
+      border-radius: 4px;
+      white-space: nowrap;
+      line-height: 1.6;
     }
     .date-text { color: hsl(var(--muted-foreground)); font-size: 12px; white-space: nowrap; }
     .size-text { color: hsl(var(--foreground)); font-variant-numeric: tabular-nums; }
@@ -264,7 +273,7 @@
     }
     .badge .icon { width: 10px; height: 10px; stroke-width: 2.5; }
 
-    .row-actions { display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end; }
+    .row-actions { display: inline-flex; align-items: center; gap: 4px; }
 
     /* ---- Empty / loading ---- */
     .empty-state { padding: 64px 24px; text-align: center; }
@@ -530,7 +539,7 @@
             <th>Size</th>
             <th class="col-date">Uploaded</th>
             <th>Visibility</th>
-            <th class="text-right">Actions</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="file-tbody"></tbody>
@@ -710,7 +719,7 @@
         <td><span class="size-text">${fmt(f.size)}</span></td>
         <td class="col-date"><span class="date-text">${fmtDate(f.uploadedAt)}</span></td>
         <td id="badge-${f.hash}">${visibilityBadge(f.isPublic)}</td>
-        <td class="text-right">
+        <td>
           <div class="row-actions">
             <button class="btn btn-ghost btn-sm btn-icon" id="copy-${f.hash}"
               data-action="copy" data-hash="${f.hash}"
